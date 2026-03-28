@@ -1,56 +1,80 @@
 # MAQIA AI
 
-**Intelligent ERP for the companies in between.**
+**Your ERP, but smarter.**
 
 ![Stage](https://img.shields.io/badge/stage-pre--seed-black?style=flat-square)
+![Beta](https://img.shields.io/badge/beta-accepting%20testers-%23BFFF00?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20FastAPI%20%7C%20Supabase-black?style=flat-square)
 ![License](https://img.shields.io/badge/license-proprietary-black?style=flat-square)
 ![Languages](https://img.shields.io/badge/languages-EN%20%7C%20PT%20%7C%20ES%20%7C%20FR%20%7C%20DE-black?style=flat-square)
 
-MAQIA AI is a multi-tenant ERP platform built for companies that outgrew Excel but can't justify SAP. We combine AI-driven workflow orchestration with deep European regulatory compliance to deliver accounting, procurement, inventory, and financial operations through a conversational interface — without the legacy baggage. Purpose-built for SMEs and mid-market companies that need real infrastructure, not watered-down enterprise software.
+MAQIA AI is the AI-native ERP for companies that outgrew Excel but can't justify SAP. Multi-company, multi-currency, built for how your business actually works — not how legacy software thinks it should. Autonomous agents handle procurement, invoicing, and reconciliation while your team stays in control through human-in-the-loop approvals.
 
 ---
 
-## Why MAQIA AI
+## The Problem
 
-- **AI-native from day one** — Not a chatbot bolted onto a spreadsheet. AI agents orchestrate multi-step workflows: automated journal entries, end-to-end procurement, and intelligent data migration with semantic validation. Every operation flows through a human-in-the-loop approval layer before committing.
+Legacy ERPs were built for a different era. Enterprise software hasn't kept up — most ERPs were designed in the 90s and patched ever since.
 
-- **Multi-tenant, multi-company, multi-currency** — Built for European complexity. Manage multiple legal entities, currencies, and consolidation hierarchies from a single platform. Intercompany transactions, elimination entries, and group-level reporting are first-class features.
+- **Months-long implementations** — Traditional ERPs take 6-18 months to deploy, burning through budgets on consultants before you see any value.
+- **Rigid, one-size-fits-all systems** — Legacy platforms force you to reshape your business around the software instead of the other way around.
+- **Data trapped in silos** — Finance can't see procurement. Warehouse can't see demand. Every answer requires exporting CSVs and chasing people.
+- **Click-heavy busywork** — Your team spends hours on manual data entry, navigating nested menus, and copying information between screens.
+- **Paying for features you'll never use** — Over-engineered suites with 1,000 features — you use 10 but pay for all of them, every month.
 
-- **Full regulatory compliance** — SAF-T PT export, SNC chart of accounts, SEPA XML payments, PSD2/Open Banking readiness. Country-specific audit configurations. Compliance isn't an add-on — it's the foundation.
-
-- **Modern stack, no legacy wrappers** — Next.js, FastAPI, LangGraph, Supabase. Every component was chosen for what's possible today, not constrained by decisions made in 2004.
-
-- **Designed for the middle market** — Purpose-built for companies with real operational complexity but without enterprise budgets. Configurable per tenant, granular role-based access, and multi-language support across five languages.
+> 70% of ERP implementations fail to meet expectations.
 
 ---
 
-## Platform Overview
+## The Difference
 
-MAQIA AI is structured as a conversational ERP where AI agents handle operational workflows end-to-end:
+**AI-First, Not AI-Bolted** — Every workflow is powered by AI from the ground up. Not a chatbot stapled onto a legacy system — intelligence is woven into every action.
 
-```
-User request
-  → Intelligent routing (intent classification + domain detection)
-    → Domain agent (Finance / Procurement / Inventory / Sales)
-      → Task execution (extraction, validation, enrichment)
-        → Human approval gate
-          → Database commit
-```
+**Built in Minutes, Not Months** — Our AI Builder configures your entire ERP through conversation. Describe your business, and MAQIA builds the system around it. No consultants, no implementation projects.
 
-**Conversational interface** — Users interact through natural language. The system classifies intent, routes to the appropriate domain, and executes multi-step operations with real-time streaming responses.
+**Pay for What You Need** — On-demand modules you enable as your business evolves. Start with procurement and finance, add inventory when you're ready. Scale up, never overpay.
 
-**Hybrid intelligence** — Fast-path rules handle routine interactions instantly. AI classification engages only when needed, keeping response times low without sacrificing accuracy.
+**Intelligence, Not Just Data** — Anomaly detection, demand forecasting, proactive alerts. MAQIA doesn't just store your data — it understands it and tells you what to do next.
 
-**Persistent context** — Conversations maintain state across sessions. The system tracks domain context, detects language switches, and avoids re-asking for information already provided.
+---
 
-**Multi-language** — All interactions support English, Portuguese, Spanish, French, and German. Language is auto-detected per message and persisted across sessions.
+## How It Works
+
+**1. Describe** — Tell MAQIA about your business — industry, workflows, entities, what matters most. Natural language, not configuration wizards.
+
+**2. Configure** — AI builds your ERP: modules, approval chains, chart of accounts, vendor lists — tailored to your operations in minutes.
+
+**3. Deploy** — Instant provisioning. Multi-tenant, isolated, production-ready. Import your existing data from SAP, PHC, Primavera, or CSV.
+
+**4. Operate** — Autonomous agents handle procurement, invoicing, reconciliation. They propose actions — your team approves. Human-in-the-loop, always.
+
+---
+
+## By the Numbers
+
+| | |
+|---|---|
+| **90%** faster ERP deployment | Minutes instead of months |
+| **60%** less time on procurement | AI handles the busywork |
+| **3x** faster invoice processing | OCR + AI matching |
+| **0** implementation consultants | Self-service AI setup |
 
 ---
 
 ## Core Modules
 
-### Finance & Accounting
+### Procurement — Procure-to-Pay Automation
+
+The complete procure-to-pay cycle managed through AI. From purchase requests to 3-way matching, all in natural language.
+
+- **Purchase Requisitions** — Describe what you need in plain English. AI creates the PR, verifies materials against your catalog, and handles ambiguities.
+- **Request for Quotation** — Generate, send, and track supplier quotes without leaving MAQIA. AI-powered vendor discovery with market research, automated email drafts, and OAuth-integrated sending via Gmail or Outlook.
+- **Purchase Orders** — Convert winning quotes to POs with a single click. Zero re-entry. Or create directly from PRs.
+- **Goods Receipt** — From PO line items with warehouse location assignment and serial/batch tracking.
+- **Invoice Processing** — Upload PDFs or forward emails. AI reads every line item, maps it, reconciles against POs, and routes for approval.
+- **3-Way Matching** — Automatic reconciliation of PO, Goods Receipt, and Invoice catches discrepancies before you pay.
+
+### Finance & Accounting — Invoicing, GL & Intercompany
 
 - Chart of Accounts with country-specific templates (SNC for Portugal)
 - Journal entries — manual, recurring, and AI-generated
@@ -61,63 +85,83 @@ User request
 - Financial statements: P&L, Balance Sheet
 - Multi-currency with ECB exchange rates and automatic gain/loss calculation
 
-### Procurement
+### Inventory & Forecasting — Real-time Visibility & AI Forecasting
 
-Full procure-to-pay cycle with AI-assisted automation:
+Know exactly what you have, where it is, and when you'll need more.
 
-- **Purchase Requisitions** — Conversational creation with intelligent material extraction, real-time product catalog verification, and candidate disambiguation when matches are ambiguous.
-- **Request for Quotation** — Multi-PR support, AI-powered vendor discovery with market research, automated email drafts, and OAuth-integrated sending via Gmail or Outlook.
-- **Purchase Orders** — Created from RFQs, PRs, or directly. Line item validation against product catalog.
-- **Goods Receipt** — From PO line items with warehouse location assignment and serial/batch tracking.
-- **Invoice Processing** — Email ingestion from Gmail and Outlook, OCR extraction from invoice PDFs, automatic PO line reconciliation, and approval routing.
-
-Covers the full lifecycle: creation, editing, copying, deletion, plus goods receipt, service entry, return orders, and supplier evaluation.
-
-### Inventory & Forecasting
-
-- Stock levels by warehouse and product with low-stock alerts
+- Real-time stock levels across multiple warehouses
 - Stock movement tracking and warehouse transfers
-- Goods receipt from purchase orders
-- Demand forecasting with trend, seasonal, and cycle detection
-- Automated replenishment recommendations
-- Scheduled forecast updates
+- Goods receipt with quality inspection
+- AI-driven demand forecasting with trend, seasonal, and cycle detection
+- Automated low-stock alerts and reorder points
+- Inventory adjustments for write-offs
 
-### Intercompany
+### Sales — Quote-to-Cash
 
-- Transaction tracking across legal entities
-- Relationship rules: Standard, Netting, Recharge, Loan
-- Consolidation workspace with automatic elimination entries
-- Period close checklists
-- Intercompany reconciliation
-- AI-powered recommendations for intercompany packages
+- Quote creation with AI-powered pricing suggestions
+- One-click quote to sales order conversion
+- Customer management and history
+- AR invoicing and revenue tracking
 
-### Sales
+### Intercompany — Unified Group Operations
 
-- Sales order management
-- AR invoicing and tracking
+Run 2 to 20+ legal entities from a single workspace. Each entity gets its own chart of accounts, currency, and tax configuration — while group-level reporting gives you the full picture instantly.
+
+- Automatic intercompany transaction matching
+- AI-driven discrepancy detection and suggested corrections
+- Consolidation workspace with elimination entries
+- Period close checklists and IC reconciliation
 
 ### Data Migration — MigraQ
 
-AI-powered pipeline for migrating from legacy ERPs (SAP, Odoo, QuickBooks, Primavera):
+Import from SAP Business One, PHC, Primavera, or CSV. AI maps your data model automatically.
 
 1. **Entity classification** — AI maps uploaded files to the correct target tables with confidence scoring
 2. **Column mapping** — Intelligent matching using AI, learned mappings from previous migrations, and ERP-specific profiles
 3. **Dependency ordering** — Automatic sequencing ensures parent records load before children
-4. **Data transformation** — Date normalization, currency handling, boolean conversion, status code mapping
-5. **Validation** — Deterministic checks (VAT, IBAN, EAN checksums, type/format) plus AI-powered anomaly detection
-6. **Safe insertion** — Batched writes with full tracking and one-click rollback per migration session
+4. **Validation** — Deterministic checks (VAT, IBAN, EAN checksums) plus AI-powered anomaly detection
+5. **Safe insertion** — Batched writes with full tracking and one-click rollback per migration session
 
 ---
 
-## Approvals & Workflows
+## Capabilities
 
-Every write operation flows through a configurable approval layer:
+| Capability | Description |
+|------------|-------------|
+| **Autonomous AI Agents** | Agents that draft purchase orders, match invoices, and reconcile payments. They propose — you approve. Every action is auditable. |
+| **AI Builder** | Describe your business in natural language. AI configures a fully functional ERP tailored to your industry — in minutes. |
+| **Insights & Analytics** | Ask questions in plain English, build custom dashboards, receive proactive alerts about anomalies and opportunities. No SQL needed. |
+| **Multi-Entity Management** | Unlimited legal entities per workspace with per-entity currency, tax config, and consolidated group reporting. |
+| **Multi-Currency** | Real-time exchange rates with automatic daily updates. Period-end revaluation and unrealized gain/loss fully automated. |
+| **Tax Compliance** | SNC chart of accounts, SAF-T PT generation, Spanish SII compliance — built in, not bolted on. |
+| **Teams & Governance** | Role-based access control, multi-level approval chains, complete audit trails, tenant-level feature flags. |
+| **Fraud Detection** | 3-way invoice matching, AI anomaly detection, multi-level approvals, vendor approval workflows, and proactive alerts. |
+| **Integrations** | Gmail/Outlook email integration, invoice capture from inbox, RFQ sending via email, webhook support. |
+| **5 Languages** | Full UI, AI chat, voice input, and ERP glossary in English, Portuguese, Spanish, French, and German. |
 
-- **Supported entities:** Purchase Requisitions, RFQs, Purchase Orders, Invoices, Products, Intercompany Transactions, Vendor Records
-- **Role-based routing** with granular, configurable permissions
-- **Visual workflow builder** for custom approval chains
-- **Full audit trail** — requester info, line items, amounts, and approval metadata
-- **Real-time notifications** — instant push when approvals are pending or resolved
+---
+
+## Who It's For
+
+**Multi-Entity SMEs** — Managing 2-20+ companies across borders. Manual intercompany reconciliation eating hours weekly. Need multi-currency, multi-entity without SAP complexity.
+
+**Accounting Firms** — Managing 10-50+ client entities on different systems. Copy-pasting between PHC, Primavera, and spreadsheets. Want one platform for all clients with firm-level oversight.
+
+**Legacy ERP Migrants** — Stuck on SAP Business One, PHC, or Primavera. Paying for features you never use and UX from 2008. Want something modern that doesn't require a 6-month project.
+
+---
+
+## Competitive Landscape
+
+|  | MAQIA AI | SAP Business One | Oracle NetSuite | Odoo | Sage |
+|--|----------|-----------------|-----------------|------|------|
+| **Implementation cost** | Free (Beta) | $500K - $5M+ | $25K - $100K+ | $5K - $50K | $10K - $50K |
+| **Time to go live** | Days | 6 - 18 months | 3 - 6 months | 1 - 3 months | 1 - 3 months |
+| **Training time** | Minutes | Months | Weeks | Days | Weeks |
+| **Natural language interface** | Native | No | No | No | No |
+| **AI invoice OCR** | Native | Add-on | Add-on | Add-on | Add-on |
+| **AI demand forecasting** | Native | No | Add-on | No | No |
+| **Proactive anomaly detection** | Native | No | No | No | No |
 
 ---
 
@@ -129,72 +173,44 @@ Every write operation flows through a configurable approval layer:
 | **Multi-factor auth** | Optional MFA enforcement with tiered access levels |
 | **Authorization** | Granular role-based access control with permission-based UI rendering |
 | **Tenant isolation** | Full data isolation between tenants at the application and database layer |
-| **Session security** | Auto-logout on idle, secure session management |
-| **Regulatory** | SAF-T PT, SNC chart of accounts, SEPA XML, PSD2/Open Banking, country-specific audit configs |
-
----
-
-## Integrations
-
-| Integration | Purpose |
-|-------------|---------|
-| **Gmail / Google Workspace** | Invoice email ingestion, RFQ sending via OAuth |
-| **Microsoft 365 / Outlook** | Invoice email ingestion, RFQ sending via OAuth |
-| **OCR / Document AI** | Automatic extraction from invoice PDFs |
-| **ECB Exchange Rates** | Multi-currency rate updates |
-| **Natural language queries** | Ask questions about your data in plain language |
+| **Audit trail** | Immutable logging of every AI action. Encryption at rest and in transit. |
+| **Regulatory** | SAF-T PT, SNC, SEPA XML, PSD2/Open Banking, country-specific audit configs |
+| **EU AI Act** | Full transparency on AI decision-making. Human-in-the-loop by default. Auditable AI outputs across every workflow. |
 
 ---
 
 ## Tech Stack
 
-**Frontend**
-- Next.js (App Router) · React · TypeScript
-- Tailwind CSS · shadcn/ui · Framer Motion
-- Tremor · Recharts · Plotly (financial visualizations)
-- Phosphor Icons · PP Neue Montreal typeface
+**Frontend** — Next.js (App Router) · React · TypeScript · Tailwind CSS · shadcn/ui · Framer Motion
 
-**Backend**
-- FastAPI (async, streaming)
-- LangGraph · LangChain
-- Supabase (Postgres, Row-Level Security, Realtime)
+**Backend** — FastAPI · LangGraph · LangChain · Supabase (Postgres, Row-Level Security, Realtime)
 
-**Infrastructure**
-- Google Cloud Run
-- Docker
-- Supabase (auth, storage, database, realtime)
+**Infrastructure** — Google Cloud Run · Docker · Supabase
 
 ---
 
-## Localization
+## Beta Program
 
-MAQIA AI supports five languages across the full stack:
+We're selecting beta testers who want to shape the future of ERP. During beta, everything is free:
 
-| Language | UI | AI Chat | Voice Input | ERP Glossary |
-|----------|:--:|:-------:|:-----------:|:------------:|
-| English | x | x | x | x |
-| Portuguese (PT) | x | x | x | x |
-| Spanish | x | x | x | x |
-| French | x | x | x | x |
-| German | x | x | x | x |
+- All modules included
+- AI Assistant with natural language queries
+- Unlimited users
+- Free implementation and data migration
+- Priority support from the founding team
+- AI-driven onboarding
 
-Language is auto-detected per message in chat, persisted across sessions, and configurable as a tenant-level default.
-
----
-
-## Status
-
-MAQIA AI is in **pre-seed stage**, actively building core modules. We're onboarding early design partners — accounting firms and mid-market companies in Portugal and across Europe.
-
-Interested in early access? Reach out below.
+**[Apply for Beta](https://maqia.ai)** — no credit card required.
 
 ---
 
 ## Contact
 
 - **Website** — [maqia.ai](https://maqia.ai)
-- **LinkedIn** — [MAQIA AI](https://www.linkedin.com/company/maqia)
 - **Email** — hello@maqia.ai
+- **LinkedIn** — [/company/maqia](https://www.linkedin.com/company/maqia)
+- **Twitter** — [@maqiaai](https://twitter.com/maqiaai)
+- **GitHub** — [maqiaai-lab](https://github.com/maqiaai-lab)
 
 ---
 
