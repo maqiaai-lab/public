@@ -4,11 +4,11 @@
 
 ![Stage](https://img.shields.io/badge/stage-pre--seed-black?style=flat-square)
 ![Beta](https://img.shields.io/badge/beta-accepting%20testers-%23BFFF00?style=flat-square)
-![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20FastAPI%20%7C%20Supabase-black?style=flat-square)
+![Stack](https://img.shields.io/badge/stack-Next.js%20%7C%20FastAPI%20%7C%20PostgreSQL-black?style=flat-square)
 ![License](https://img.shields.io/badge/license-proprietary-black?style=flat-square)
 ![Languages](https://img.shields.io/badge/languages-EN%20%7C%20PT%20%7C%20ES%20%7C%20FR%20%7C%20DE-black?style=flat-square)
 
-MAQIA AI is the AI-native ERP for companies that outgrew Excel but can't justify SAP. Multi-company, multi-currency, built for how your business actually works — not how legacy software thinks it should. Autonomous agents handle procurement, invoicing, and reconciliation while your team stays in control through human-in-the-loop approvals.
+MAQIA AI is the AI-native ERP for companies that outgrew Excel or QuickBooks but can't justify SAP. Multi-company, multi-currency, built for how your business actually works — not how legacy software thinks it should. Autonomous agents handle procurement, invoicing, and reconciliation while your team stays in control through human-in-the-loop approvals.
 
 ---
 
@@ -183,9 +183,9 @@ Import from SAP Business One, PHC, Primavera, or CSV. AI maps your data model au
 
 **Frontend** — Next.js (App Router) · React · TypeScript · Tailwind CSS · shadcn/ui · Framer Motion
 
-**Backend** — FastAPI · LangGraph · LangChain · Supabase (Postgres, Row-Level Security, Realtime)
+**Backend** — FastAPI · LangGraph · LangChain · PostgreSQL (Row-Level Security, Realtime)
 
-**Infrastructure** — Google Cloud Run · Docker · Supabase
+**Infrastructure** — Google Cloud Run · Docker · PostgreSQL
 
 ---
 
