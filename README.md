@@ -68,14 +68,15 @@ If your operations are too specific for off-the-shelf software and too important
 
 ---
 
-## What We Build
+## Use Cases Built
 
-Custom AI systems for the operational backbone of industrial businesses, including:
+Custom AI systems across the operational backbone of industrial businesses, including:
 
 - **Procurement** — purchase requests, RFQs, supplier discovery, purchase orders, 3-way matching
-- **Invoicing** — document capture, line-item extraction, reconciliation, approval routing
-- **Inventory** — real-time stock visibility, movement tracking, demand forecasting
+- **Manufacturing** — production workflows, shop-floor data capture, operational visibility
 - **Goods Receipt** — receipt against orders, warehouse assignment, quality inspection
+- **Inventory** — real-time stock visibility, movement tracking, demand forecasting
+- **Finance** — invoicing, reconciliation, approval routing, reporting
 
 Every system ships with autonomous agents that propose actions and a human-in-the-loop layer that keeps your team in control. Every AI action is auditable.
 
