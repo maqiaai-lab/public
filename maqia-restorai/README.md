@@ -15,9 +15,26 @@ cp .env.example .env
 # 3a. Restore a photo directly (CLI)
 python restore.py path/to/old_photo.jpg
 
-# 3b. Or run the API server
+# 3b. Or run the API server (+ mobile camera-capture web UI at http://localhost:8000/ )
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
+
+## Digitization (photo of a physical print)
+
+Users often don't have a scan — just the physical photo. The pipeline
+auto-handles a phone snapshot of a print: it detects the photo's edges,
+de-skews the perspective, crops out the background, and corrects the color
+cast **before** restoration. No user action needed — it's auto-detected and
+skipped for already-digital uploads.
+
+- **Web UI** (`/`): "Take a photo of your print" opens the phone's rear camera.
+- **API**: `POST /restore?digitize=auto|force|skip`
+- **CLI**: `python restore.py capture.jpg --digitize auto`
+
+The digitization stage uses a strategy pattern (`app/pipeline/digitize/`).
+Single-shot ships today; a multi-shot strategy (merge several frames to remove
+glare / recover detail) plugs in via `digitize_strategy="multi_shot"` config
+with no changes to the rest of the pipeline.
 
 ## API usage
 

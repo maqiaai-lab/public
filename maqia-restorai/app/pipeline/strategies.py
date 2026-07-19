@@ -38,25 +38,38 @@ def _should_run_codeformer(repaired: Image.Image) -> tuple[bool, str]:
         return True, "face check failed, running CodeFormer by default"
 
 
+async def _safe_stage(name: str, coro_fn, current: Image.Image) -> Image.Image:
+    """Run one restoration stage. If the external model errors, log it and
+    pass the current image through unchanged so a single flaky model never
+    aborts the whole restoration."""
+    try:
+        return await coro_fn()
+    except Exception as e:
+        logger.warning("Stage '%s' failed (%s) — passing image through unchanged", name, e)
+        return current
+
+
 async def run_faithful_chain(img: Image.Image, analysis: Analysis) -> Image.Image:
     logger.info("Step 1: Global damage repair (Bringing Old Photos Back to Life)")
-    out = await bringing_old_photos_back(img, with_scratch=True)
+    out = await _safe_stage("damage-repair",
+                            lambda: bringing_old_photos_back(img, with_scratch=True), img)
 
     if analysis.has_faces:
         should_run, reason = _should_run_codeformer(out)
         if should_run:
             logger.info("Step 2: Face restoration (CodeFormer, fidelity=%.2f) — %s",
                         settings.codeformer_fidelity, reason)
-            out = await codeformer(out, fidelity=settings.codeformer_fidelity)
+            out = await _safe_stage("face-restore",
+                                    lambda: codeformer(out, fidelity=settings.codeformer_fidelity), out)
         else:
             logger.info("Step 2: Skipping CodeFormer — %s", reason)
 
     if analysis.is_bw:
         logger.info("Step 3: Colorization (DDColor)")
-        out = await ddcolor(out)
+        out = await _safe_stage("colorize", lambda: ddcolor(out), out)
 
     logger.info("Step 4: Restorative upscale (Real-ESRGAN 2x)")
-    out = await real_esrgan_upscale(out, scale=2)
+    out = await _safe_stage("upscale", lambda: real_esrgan_upscale(out, scale=2), out)
 
     return out
 

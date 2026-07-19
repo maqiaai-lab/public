@@ -1,15 +1,19 @@
+import io
 import uuid
 import logging
 from pathlib import Path
+from typing import Optional
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from PIL import Image
 
 from app.config import settings
 from app.models import JobStatus, JobResponse, JobStatusResponse
 from app.storage import save_original, save_result, ensure_dirs
-from app.pipeline.preprocess import preprocess
+from app.pipeline.digitize import digitize_images
+from app.pipeline.preprocess import preprocess_image
 from app.pipeline.analysis import analyze
 from app.pipeline.strategies import restore_full
 
@@ -33,11 +37,17 @@ app = FastAPI(
 )
 
 
-async def _process_job(job_id: str, img_bytes: bytes):
+async def _process_job(job_id: str, img_bytes: bytes, digitize_mode: Optional[bool]):
     try:
         jobs[job_id]["status"] = JobStatus.PROCESSING
 
-        img = preprocess(img_bytes)
+        # Stage 0: digitization — rectify a phone capture of a physical photo
+        # (auto-detected; no-op for already-digital uploads).
+        dig = digitize_images([Image.open(io.BytesIO(img_bytes))], force=digitize_mode)
+        if dig.was_digitized:
+            logger.info("Job %s digitized (conf=%.2f)", job_id, dig.confidence)
+
+        img = preprocess_image(dig.image)
         original_path = save_original(img)
         jobs[job_id]["original_path"] = original_path
 
@@ -45,6 +55,8 @@ async def _process_job(job_id: str, img_bytes: bytes):
         logger.info("Job %s analysis: %s", job_id, analysis.model_dump())
 
         restored_img, result = await restore_full(img, analysis)
+        result.was_digitized = dig.was_digitized
+        result.digitize_confidence = dig.confidence
 
         result_path = save_result(restored_img, job_id)
         result.result_path = result_path
@@ -63,7 +75,11 @@ async def _process_job(job_id: str, img_bytes: bytes):
 
 
 @app.post("/restore", response_model=JobResponse)
-async def restore_photo(file: UploadFile, background_tasks: BackgroundTasks):
+async def restore_photo(
+    file: UploadFile,
+    background_tasks: BackgroundTasks,
+    digitize: str = "auto",
+):
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(400, "Upload must be an image file")
 
@@ -71,10 +87,13 @@ async def restore_photo(file: UploadFile, background_tasks: BackgroundTasks):
     if len(raw) > 50 * 1024 * 1024:
         raise HTTPException(400, "File too large (max 50MB)")
 
+    # digitize: "auto" (detect), "force" (always), or "skip"
+    digitize_mode = {"auto": None, "force": True, "skip": False}.get(digitize, None)
+
     job_id = uuid.uuid4().hex[:12]
     jobs[job_id] = {"status": JobStatus.QUEUED}
 
-    background_tasks.add_task(_process_job, job_id, raw)
+    background_tasks.add_task(_process_job, job_id, raw, digitize_mode)
 
     return JobResponse(job_id=job_id, status=JobStatus.QUEUED)
 
@@ -98,6 +117,7 @@ async def get_status(job_id: str):
         identity_score=result.get("identity_score"),
         result_url=result_url,
         original_url=original_url,
+        was_digitized=result.get("was_digitized", False),
     )
 
 
@@ -115,6 +135,12 @@ async def get_original_file(filename: str):
     if not path.exists():
         raise HTTPException(404, "File not found")
     return FileResponse(path, media_type="image/png")
+
+
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    page = Path(__file__).parent / "web" / "index.html"
+    return HTMLResponse(page.read_text())
 
 
 @app.get("/health")

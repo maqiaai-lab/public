@@ -79,10 +79,18 @@ async def _download_image(url: str) -> Image.Image:
 
 async def bringing_old_photos_back(img: Image.Image, with_scratch: bool = True) -> Image.Image:
     data_uri = _image_to_data_uri(img)
-    output_url = await _run_model(
-        "c75db81db6cbd809d93cc3b7e7a088a351a3349c9fa02b6d393e35e0d51ba799",
-        {"image": data_uri, "with_scratch": with_scratch},
-    )
+    version = "c75db81db6cbd809d93cc3b7e7a088a351a3349c9fa02b6d393e35e0d51ba799"
+    try:
+        output_url = await _run_model(version, {"image": data_uri, "with_scratch": with_scratch})
+    except RuntimeError:
+        # The scratch-detection stage is fragile and throws "list index out of
+        # range" on some images. Retry once without it rather than failing.
+        if with_scratch:
+            import logging
+            logging.getLogger(__name__).warning("Damage repair failed with scratch detection — retrying without")
+            output_url = await _run_model(version, {"image": data_uri, "with_scratch": False})
+        else:
+            raise
     return await _download_image(output_url)
 
 

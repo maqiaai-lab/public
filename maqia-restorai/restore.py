@@ -7,6 +7,7 @@ Usage:
 """
 import asyncio
 import argparse
+import io
 import sys
 from pathlib import Path
 
@@ -16,7 +17,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from PIL import Image
-from app.pipeline.preprocess import preprocess
+from app.pipeline.digitize import digitize_images
+from app.pipeline.preprocess import preprocess_image
 from app.pipeline.analysis import analyze
 from app.pipeline.strategies import restore_full
 
@@ -25,6 +27,8 @@ async def main():
     parser = argparse.ArgumentParser(description="Restore a damaged photo")
     parser.add_argument("input", help="Path to the input image")
     parser.add_argument("--output", "-o", default=None, help="Output path (default: input_restored.png)")
+    parser.add_argument("--digitize", choices=["auto", "force", "skip"], default="auto",
+                        help="Physical-photo digitization: auto-detect (default), force, or skip")
     args = parser.parse_args()
 
     input_path = Path(args.input)
@@ -37,8 +41,14 @@ async def main():
     print(f"Loading {input_path}...")
     raw = input_path.read_bytes()
 
+    print("Digitizing (if photo-of-photo)...")
+    dig_mode = {"auto": None, "force": True, "skip": False}[args.digitize]
+    dig = digitize_images([Image.open(io.BytesIO(raw))], force=dig_mode)
+    if dig.was_digitized:
+        print(f"  Detected & rectified physical photo (confidence {dig.confidence:.2f})")
+
     print("Preprocessing...")
-    img = preprocess(raw)
+    img = preprocess_image(dig.image)
 
     print("Analyzing damage...")
     analysis = analyze(img)

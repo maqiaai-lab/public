@@ -26,6 +26,8 @@ class RestoreResult(BaseModel):
     identity_score: Optional[float] = None
     result_path: Optional[str] = None
     original_path: Optional[str] = None
+    was_digitized: bool = False
+    digitize_confidence: Optional[float] = None
 
 
 class JobResponse(BaseModel):
@@ -40,3 +42,4 @@ class JobStatusResponse(BaseModel):
     identity_score: Optional[float] = None
     result_url: Optional[str] = None
     original_url: Optional[str] = None
+    was_digitized: bool = False
