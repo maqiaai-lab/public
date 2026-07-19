@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     identity_threshold: float = 0.55
     review_threshold: float = 0.68
 
+    # Colorization: "deoldify" (natural, conservative — default) or "ddcolor"
+    # (vivid but prone to implausible hues on plain regions).
+    colorizer: str = "deoldify"
+    deoldify_model: str = "Stable"     # "Stable" (identity-safe) or "Artistic"
+    deoldify_render_factor: int = 35
+
     # Digitization (phone capture of a physical photo)
     digitize_enabled: bool = True
     digitize_auto_detect: bool = True

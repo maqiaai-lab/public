@@ -8,8 +8,18 @@ from app.pipeline.models.replicate_models import (
     bringing_old_photos_back,
     codeformer,
     ddcolor,
+    deoldify,
     real_esrgan_upscale,
 )
+
+
+async def _colorize(img: Image.Image) -> Image.Image:
+    """Colorize B&W using the configured model. DeOldify is the default — it
+    produces natural, muted tones; DDColor is vivid but invents implausible
+    hues (garish backgrounds) on low-information regions."""
+    if settings.colorizer == "ddcolor":
+        return await ddcolor(img)
+    return await deoldify(img, settings.deoldify_model, settings.deoldify_render_factor)
 
 logger = logging.getLogger(__name__)
 
@@ -105,8 +115,8 @@ async def run_faithful_chain(img: Image.Image, analysis: Analysis) -> Image.Imag
             logger.info("Step 2: Skipping CodeFormer — %s", reason)
 
     if analysis.is_bw:
-        logger.info("Step 3: Colorization (DDColor)")
-        out = await _safe_stage("colorize", lambda: ddcolor(out), out)
+        logger.info("Step 3: Colorization (%s)", settings.colorizer)
+        out = await _safe_stage("colorize", lambda: _colorize(out), out)
 
     logger.info("Step 4: Restorative upscale (Real-ESRGAN 2x)")
     out = await _safe_stage("upscale", lambda: real_esrgan_upscale(out, scale=2), out)

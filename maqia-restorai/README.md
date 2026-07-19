@@ -77,10 +77,12 @@ curl http://localhost:8000/files/results/{job_id}.png -o restored.png
 |------|-------|---------|
 | 1 | Bringing Old Photos Back to Life | Scratch/tear/fade repair |
 | 2 | CodeFormer (fidelity=0.75) | Identity-preserving face restoration |
-| 3 | DDColor | B&W → color (skipped for color photos) |
+| 3 | DeOldify (Stable) | B&W → color, natural/muted (skipped for color photos) |
 | 4 | Real-ESRGAN | Restorative 2x upscale |
 
-**Rescue fallback** (auto-escalation or `mode=enhanced`): Gemini generative restoration for severely damaged photos.
+Colorization uses **DeOldify (Stable)** by default — it produces natural, muted
+tones. DDColor is available via `colorizer="ddcolor"` config but tends to invent
+implausible saturated hues (garish backgrounds) on low-information regions.
 
 ## Docker
 

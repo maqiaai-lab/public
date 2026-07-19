@@ -118,6 +118,32 @@ async def ddcolor(img: Image.Image) -> Image.Image:
     return await _download_image(output_url)
 
 
+def _remove_deoldify_watermark(img: Image.Image) -> Image.Image:
+    """DeOldify stamps a small palette icon in the bottom-left corner. Inpaint
+    that fixed region away (corners are almost always background)."""
+    import numpy as np
+    import cv2
+    arr = np.asarray(img.convert("RGB"))
+    h, w = arr.shape[:2]
+    box = int(min(h, w) * 0.13)
+    mask = np.zeros((h, w), np.uint8)
+    mask[h - box:h, 0:box] = 255
+    out = cv2.inpaint(arr[:, :, ::-1], mask, 5, cv2.INPAINT_TELEA)
+    return Image.fromarray(out[:, :, ::-1])
+
+
+async def deoldify(img: Image.Image, model_name: str = "Stable", render_factor: int = 35) -> Image.Image:
+    # DeOldify expects a single-channel intent; feed a clean grayscale so it
+    # colorizes hues rather than amplifying residual tints.
+    data_uri = _image_to_data_uri(img.convert("L").convert("RGB"))
+    output_url = await _run_model(
+        "0da600fab0c45a66211339f1c16b71345d22f26ef5fea3dca1bb90bb5711e950",
+        {"input_image": data_uri, "model_name": model_name, "render_factor": render_factor},
+    )
+    out = await _download_image(output_url)
+    return _remove_deoldify_watermark(out)
+
+
 async def real_esrgan_upscale(img: Image.Image, scale: int = 2) -> Image.Image:
     data_uri = _image_to_data_uri(img)
     output_url = await _run_model(
