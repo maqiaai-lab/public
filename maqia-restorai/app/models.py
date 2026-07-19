@@ -16,6 +16,7 @@ class Analysis(BaseModel):
     has_faces: bool
     n_faces: int
     megapixels: float
+    min_face_age: Optional[float] = None
 
 
 class RestoreResult(BaseModel):

@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image
+from typing import Optional
 
 from app.models import Analysis
 
@@ -7,7 +8,6 @@ from app.models import Analysis
 def detect_faces(img: Image.Image) -> int:
     arr = np.asarray(img)
 
-    # Try OpenCV cascade if available
     try:
         import cv2
         gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
@@ -22,9 +22,6 @@ def detect_faces(img: Image.Image) -> int:
     except Exception:
         pass
 
-    # Heuristic: old portrait photos almost always contain faces even when
-    # damage defeats the cascade. If the center region has meaningful contrast
-    # (not a blank/uniform image), assume a face is present.
     gray = np.mean(arr, axis=2)
     h, w = gray.shape
     center = gray[h // 4 : 3 * h // 4, w // 4 : 3 * w // 4]
@@ -32,6 +29,21 @@ def detect_faces(img: Image.Image) -> int:
         return 1
 
     return 0
+
+
+def estimate_min_age(img: Image.Image) -> Optional[float]:
+    try:
+        from app.pipeline.identity import get_face_app
+        app = get_face_app()
+        if app == "unavailable":
+            return None
+        arr = np.asarray(img)[:, :, ::-1]
+        faces = app.get(arr)
+        if not faces:
+            return None
+        return min(f.age for f in faces)
+    except Exception:
+        return None
 
 
 def analyze(img: Image.Image) -> Analysis:
@@ -42,9 +54,12 @@ def analyze(img: Image.Image) -> Analysis:
 
     n_faces = detect_faces(img)
 
+    min_age = estimate_min_age(img) if n_faces > 0 else None
+
     return Analysis(
         is_bw=bool(is_bw),
         has_faces=n_faces > 0,
         n_faces=n_faces,
         megapixels=(img.width * img.height) / 1e6,
+        min_face_age=min_age,
     )
