@@ -1,75 +1,109 @@
-import replicate
 import httpx
-from PIL import Image
+import base64
 import io
-from typing import Optional
+import time
+from PIL import Image
 
 from app.config import settings
 
+API_BASE = "https://api.replicate.com/v1"
+POLL_INTERVAL = 2.0
+MAX_WAIT = 300
+
+
+def _headers() -> dict:
+    return {
+        "Authorization": f"Bearer {settings.replicate_api_token}",
+        "Content-Type": "application/json",
+    }
+
+
+def _image_to_data_uri(img: Image.Image) -> str:
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    return f"data:image/png;base64,{b64}"
+
+
+async def _run_model(version: str, input_data: dict) -> str:
+    async with httpx.AsyncClient(timeout=30.0, verify="/root/.ccr/ca-bundle.crt") as client:
+        resp = await client.post(
+            f"{API_BASE}/predictions",
+            headers=_headers(),
+            json={"version": version, "input": input_data},
+        )
+        resp.raise_for_status()
+        prediction = resp.json()
+
+        get_url = prediction["urls"]["get"]
+        elapsed = 0.0
+        while prediction["status"] not in ("succeeded", "failed", "canceled"):
+            await _sleep(POLL_INTERVAL)
+            elapsed += POLL_INTERVAL
+            if elapsed > MAX_WAIT:
+                raise TimeoutError(f"Prediction timed out after {MAX_WAIT}s")
+            resp = await client.get(get_url, headers=_headers())
+            resp.raise_for_status()
+            prediction = resp.json()
+
+        if prediction["status"] != "succeeded":
+            raise RuntimeError(f"Prediction failed: {prediction.get('error', 'unknown')}")
+
+        output = prediction["output"]
+        if isinstance(output, list):
+            return output[0] if isinstance(output[0], str) else output[0]["file"]
+        return str(output)
+
+
+async def _sleep(seconds: float):
+    import asyncio
+    await asyncio.sleep(seconds)
+
 
 async def _download_image(url: str) -> Image.Image:
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=60.0, follow_redirects=True, verify="/root/.ccr/ca-bundle.crt") as client:
         resp = await client.get(url)
         resp.raise_for_status()
         return Image.open(io.BytesIO(resp.content))
 
 
-def _upload_to_replicate(img: Image.Image) -> str:
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
-    url = replicate.files.create(buf, filename="input.png")
-    return str(url)
-
-
 async def bringing_old_photos_back(img: Image.Image, with_scratch: bool = True) -> Image.Image:
-    input_url = _upload_to_replicate(img)
-    output = replicate.run(
-        "microsoft/bringing-old-photos-back-to-life:c75db81db6cbd809d93f6f8a5ce4c3da690e7ae1f8a6c9df73a73f4f0f1459a1",
-        input={
-            "image": input_url,
-            "with_scratch": with_scratch,
-        },
+    data_uri = _image_to_data_uri(img)
+    output_url = await _run_model(
+        "c75db81db6cbd809d93cc3b7e7a088a351a3349c9fa02b6d393e35e0d51ba799",
+        {"image": data_uri, "with_scratch": with_scratch},
     )
-    output_url = str(output)
     return await _download_image(output_url)
 
 
 async def codeformer(img: Image.Image, fidelity: float = 0.75) -> Image.Image:
-    input_url = _upload_to_replicate(img)
-    output = replicate.run(
-        "sczhou/codeformer:7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
-        input={
-            "image": input_url,
+    data_uri = _image_to_data_uri(img)
+    output_url = await _run_model(
+        "cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2",
+        {
+            "image": data_uri,
             "codeformer_fidelity": fidelity,
             "upscale": 1,
             "face_upsample": True,
             "background_enhance": False,
         },
     )
-    output_url = str(output)
     return await _download_image(output_url)
 
 
 async def ddcolor(img: Image.Image) -> Image.Image:
-    input_url = _upload_to_replicate(img)
-    output = replicate.run(
-        "piddnad/ddcolor:ca494ba129e44e45f661d6ece83c4c98a9a7c774309beca01571ae120b0d2b68",
-        input={"image": input_url},
+    data_uri = _image_to_data_uri(img)
+    output_url = await _run_model(
+        "ca494ba129e44e45f661d6ece83c4c98a9a7c774309beca01429b58fce8aa695",
+        {"image": data_uri},
     )
-    output_url = output[0] if isinstance(output, list) else str(output)
     return await _download_image(output_url)
 
 
 async def real_esrgan_upscale(img: Image.Image, scale: int = 2) -> Image.Image:
-    input_url = _upload_to_replicate(img)
-    output = replicate.run(
-        "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa",
-        input={
-            "image": input_url,
-            "scale": scale,
-            "face_enhance": False,
-        },
+    data_uri = _image_to_data_uri(img)
+    output_url = await _run_model(
+        "b3ef194191d13140337468c916c2c5b96dd0cb06dffc032a022a31807f6a5ea8",
+        {"image": data_uri, "scale": scale, "face_enhance": False},
     )
-    output_url = str(output)
     return await _download_image(output_url)
