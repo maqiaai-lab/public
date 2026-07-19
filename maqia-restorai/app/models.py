@@ -11,11 +11,6 @@ class JobStatus(str, Enum):
     FAILED = "failed"
 
 
-class EngineMode(str, Enum):
-    FAITHFUL = "faithful"
-    ENHANCED = "enhanced"
-
-
 class Analysis(BaseModel):
     is_bw: bool
     has_faces: bool

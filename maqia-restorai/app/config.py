@@ -4,7 +4,6 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     replicate_api_token: str = ""
-    gemini_api_key: str = ""
 
     storage_dir: Path = Path("./storage")
     max_edge: int = 2048

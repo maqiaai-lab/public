@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 import logging
 from pathlib import Path
@@ -6,10 +5,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.models import JobStatus, JobResponse, JobStatusResponse, EngineMode
+from app.models import JobStatus, JobResponse, JobStatusResponse
 from app.storage import save_original, save_result, ensure_dirs
 from app.pipeline.preprocess import preprocess
 from app.pipeline.analysis import analyze
@@ -18,7 +16,6 @@ from app.pipeline.strategies import restore_full
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# In-memory job store (MVP — replace with Redis/DB for production)
 jobs: dict[str, dict] = {}
 
 
@@ -36,7 +33,7 @@ app = FastAPI(
 )
 
 
-async def _process_job(job_id: str, img_bytes: bytes, mode: EngineMode):
+async def _process_job(job_id: str, img_bytes: bytes):
     try:
         jobs[job_id]["status"] = JobStatus.PROCESSING
 
@@ -47,7 +44,7 @@ async def _process_job(job_id: str, img_bytes: bytes, mode: EngineMode):
         analysis = analyze(img)
         logger.info("Job %s analysis: %s", job_id, analysis.model_dump())
 
-        restored_img, result = await restore_full(img, analysis, mode)
+        restored_img, result = await restore_full(img, analysis)
 
         result_path = save_result(restored_img, job_id)
         result.result_path = result_path
@@ -66,11 +63,7 @@ async def _process_job(job_id: str, img_bytes: bytes, mode: EngineMode):
 
 
 @app.post("/restore", response_model=JobResponse)
-async def restore_photo(
-    file: UploadFile,
-    background_tasks: BackgroundTasks,
-    mode: EngineMode = EngineMode.FAITHFUL,
-):
+async def restore_photo(file: UploadFile, background_tasks: BackgroundTasks):
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(400, "Upload must be an image file")
 
@@ -79,9 +72,9 @@ async def restore_photo(
         raise HTTPException(400, "File too large (max 50MB)")
 
     job_id = uuid.uuid4().hex[:12]
-    jobs[job_id] = {"status": JobStatus.QUEUED, "mode": mode}
+    jobs[job_id] = {"status": JobStatus.QUEUED}
 
-    background_tasks.add_task(_process_job, job_id, raw, mode)
+    background_tasks.add_task(_process_job, job_id, raw)
 
     return JobResponse(job_id=job_id, status=JobStatus.QUEUED)
 
