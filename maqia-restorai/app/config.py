@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Colorization: "deoldify" (natural, conservative — default) or "ddcolor"
     # (vivid but prone to implausible hues on plain regions).
     colorizer: str = "deoldify"
-    deoldify_model: str = "Stable"     # "Stable" (identity-safe) or "Artistic"
+    deoldify_model: str = "Artistic"   # "Artistic" (warmer skin) or "Stable" (muted)
     deoldify_render_factor: int = 35
 
     # Digitization (phone capture of a physical photo)
