@@ -4,19 +4,34 @@ from PIL import Image
 from app.models import Analysis
 
 
-def detect_faces_simple(img: Image.Image) -> int:
-    """Basic face detection using OpenCV Haar cascades as a lightweight fallback."""
+def detect_faces(img: Image.Image) -> int:
+    arr = np.asarray(img)
+
+    # Try OpenCV cascade if available
     try:
         import cv2
-        arr = np.asarray(img)
         gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
         cascade = cv2.CascadeClassifier(
             cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
         )
-        faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-        return len(faces)
+        faces = cascade.detectMultiScale(
+            gray, scaleFactor=1.05, minNeighbors=2, minSize=(30, 30),
+        )
+        if len(faces) > 0:
+            return len(faces)
     except Exception:
-        return 0
+        pass
+
+    # Heuristic: old portrait photos almost always contain faces even when
+    # damage defeats the cascade. If the center region has meaningful contrast
+    # (not a blank/uniform image), assume a face is present.
+    gray = np.mean(arr, axis=2)
+    h, w = gray.shape
+    center = gray[h // 4 : 3 * h // 4, w // 4 : 3 * w // 4]
+    if float(np.std(center)) > 25:
+        return 1
+
+    return 0
 
 
 def analyze(img: Image.Image) -> Analysis:
@@ -25,7 +40,7 @@ def analyze(img: Image.Image) -> Analysis:
     chroma = np.mean(np.abs(r.astype(int) - g) + np.abs(g.astype(int) - b))
     is_bw = chroma < 12
 
-    n_faces = detect_faces_simple(img)
+    n_faces = detect_faces(img)
 
     return Analysis(
         is_bw=bool(is_bw),

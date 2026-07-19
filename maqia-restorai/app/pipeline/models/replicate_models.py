@@ -25,14 +25,24 @@ def _image_to_data_uri(img: Image.Image) -> str:
     return f"data:image/png;base64,{b64}"
 
 
-async def _run_model(version: str, input_data: dict) -> str:
+async def _run_model(version: str, input_data: dict, max_retries: int = 4) -> str:
     async with httpx.AsyncClient(timeout=30.0, verify="/root/.ccr/ca-bundle.crt") as client:
-        resp = await client.post(
-            f"{API_BASE}/predictions",
-            headers=_headers(),
-            json={"version": version, "input": input_data},
-        )
-        resp.raise_for_status()
+        for attempt in range(max_retries):
+            resp = await client.post(
+                f"{API_BASE}/predictions",
+                headers=_headers(),
+                json={"version": version, "input": input_data},
+            )
+            if resp.status_code == 429:
+                wait = 2 ** (attempt + 1)
+                import logging
+                logging.getLogger(__name__).warning("Rate limited, retrying in %ds...", wait)
+                await _sleep(wait)
+                continue
+            resp.raise_for_status()
+            break
+        else:
+            raise RuntimeError("Rate limited after all retries")
         prediction = resp.json()
 
         get_url = prediction["urls"]["get"]
