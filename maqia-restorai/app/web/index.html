@@ -99,7 +99,7 @@ function reset() {
   $('camera').value = ''; $('gallery').value = '';
 }
 
-async function handleFile(file) {
+async function handleFile(file, source) {
   if (!file) return;
   $('upload-card').classList.add('hidden');
   $('preview').classList.remove('hidden');
@@ -109,9 +109,13 @@ async function handleFile(file) {
   const form = new FormData();
   form.append('file', file);
 
+  // Camera capture: we KNOW it's a photo-of-a-photo -> force digitization.
+  // Gallery pick: ambiguous -> let the conservative auto-detector decide.
+  const mode = source === 'camera' ? 'force' : 'auto';
+
   let res;
   try {
-    res = await fetch('/restore?digitize=auto', { method:'POST', body:form });
+    res = await fetch('/restore?digitize=' + mode, { method:'POST', body:form });
   } catch (e) { $('status').textContent = 'Upload failed. Try again.'; return; }
   if (!res.ok) { $('status').textContent = 'Server error: ' + res.status; return; }
 
@@ -157,8 +161,8 @@ function showResult(data) {
   $('compare').classList.remove('hidden');
 }
 
-$('camera').addEventListener('change', e => handleFile(e.target.files[0]));
-$('gallery').addEventListener('change', e => handleFile(e.target.files[0]));
+$('camera').addEventListener('change', e => handleFile(e.target.files[0], 'camera'));
+$('gallery').addEventListener('change', e => handleFile(e.target.files[0], 'gallery'));
 </script>
 </body>
 </html>

@@ -13,29 +13,68 @@ from app.pipeline.models.replicate_models import (
 
 logger = logging.getLogger(__name__)
 
-YOUNG_CHILD_AGE_THRESHOLD = 6
+
+def fidelity_for_age(age: float | None) -> float | None:
+    """Map a detected face age to a CodeFormer fidelity, or None to skip.
+
+    CodeFormer's `fidelity` runs 0..1 where HIGHER = stay closer to the real
+    input (less generative restructuring). Younger faces sit further from
+    CodeFormer's adult-biased training prior, so it distorts them — we counter
+    that by dialing fidelity UP for children (gentler, identity-preserving) and
+    skipping infants/toddlers entirely, rather than a single on/off switch."""
+    if age is None:
+        return settings.codeformer_fidelity
+    if age < settings.codeformer_skip_age:
+        return None
+    if age < 13:
+        return settings.codeformer_child_fidelity
+    if age < 18:
+        return settings.codeformer_teen_fidelity
+    return settings.codeformer_fidelity
 
 
-def _should_run_codeformer(repaired: Image.Image) -> tuple[bool, str]:
-    """Decide whether CodeFormer is safe to run on the repaired image.
-    Only run it when InsightFace can confirm a detectable, mature face —
-    otherwise CodeFormer is likely to distort (babies, occluded faces, etc.)."""
+def _codeformer_plan(repaired: Image.Image) -> tuple[float | None, str]:
+    """Return (fidelity, reason) for the face-restoration step on this image,
+    or (None, reason) to skip it. Skips when no face is detectable (babies,
+    occlusion, odd angles) since CodeFormer distorts those."""
     try:
         from app.pipeline.identity import get_face_app
         import numpy as np
         app = get_face_app()
         if app == "unavailable":
-            return True, "InsightFace unavailable, running CodeFormer by default"
+            return settings.codeformer_fidelity, "InsightFace unavailable, default fidelity"
         arr = np.asarray(repaired)[:, :, ::-1]
         faces = app.get(arr)
         if not faces:
-            return False, "no face detected by InsightFace after repair"
+            return None, "no face detected by InsightFace after repair"
         min_age = min(f.age for f in faces)
-        if min_age < YOUNG_CHILD_AGE_THRESHOLD:
-            return False, f"young child detected (age ~{min_age:.0f})"
-        return True, f"adult face confirmed (age ~{min_age:.0f})"
+        fidelity = fidelity_for_age(min_age)
+        if fidelity is None:
+            return None, f"infant/toddler (age ~{min_age:.0f}) — skipping to avoid distortion"
+        return fidelity, f"age ~{min_age:.0f} → fidelity {fidelity:.2f}"
     except Exception:
-        return True, "face check failed, running CodeFormer by default"
+        return settings.codeformer_fidelity, "face check failed, default fidelity"
+
+
+def _guard_identity(pre_cf: Image.Image, cf_out: Image.Image) -> Image.Image:
+    """Revert CodeFormer if it distorted the face.
+
+    Age estimation is unreliable on old photos (toddlers get estimated as
+    adults), so we can't protect children by age alone. Instead we measure it:
+    compare the face identity before and after CodeFormer. If identity dropped
+    below the floor, CodeFormer restructured the person — keep the un-restored
+    face. If identity can't be measured (no face model / no detectable face),
+    keep the CodeFormer output (it usually helps)."""
+    if cf_out is pre_cf:
+        return cf_out  # stage errored and passed through
+    sim = identity_similarity(pre_cf, cf_out)
+    if sim is not None and sim < settings.codeformer_min_identity:
+        logger.warning("CodeFormer identity drift %.2f < %.2f — reverting to pre-restore face",
+                       sim, settings.codeformer_min_identity)
+        return pre_cf
+    if sim is not None:
+        logger.info("CodeFormer identity preserved (%.2f)", sim)
+    return cf_out
 
 
 async def _safe_stage(name: str, coro_fn, current: Image.Image) -> Image.Image:
@@ -55,12 +94,13 @@ async def run_faithful_chain(img: Image.Image, analysis: Analysis) -> Image.Imag
                             lambda: bringing_old_photos_back(img, with_scratch=True), img)
 
     if analysis.has_faces:
-        should_run, reason = _should_run_codeformer(out)
-        if should_run:
-            logger.info("Step 2: Face restoration (CodeFormer, fidelity=%.2f) — %s",
-                        settings.codeformer_fidelity, reason)
-            out = await _safe_stage("face-restore",
-                                    lambda: codeformer(out, fidelity=settings.codeformer_fidelity), out)
+        fidelity, reason = _codeformer_plan(out)
+        if fidelity is not None:
+            logger.info("Step 2: Face restoration (CodeFormer) — %s", reason)
+            pre_cf = out
+            cf_out = await _safe_stage("face-restore",
+                                       lambda: codeformer(pre_cf, fidelity=fidelity), pre_cf)
+            out = _guard_identity(pre_cf, cf_out)
         else:
             logger.info("Step 2: Skipping CodeFormer — %s", reason)
 
